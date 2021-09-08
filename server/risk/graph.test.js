@@ -41,4 +41,5 @@ test('can connect nodes', () => {
     g.addConnection(g.getNode(n1), g.getNode(n2))
 
     expect(g.areNodesConnected(g.getNode(n1), g.getNode(n2))).toBe(true)
+    expect(g.areNodesConnected(g.getNode(n2), g.getNode(n1))).toBe(true)
 })
