@@ -1,6 +1,7 @@
 const { Graph } = require('./data_structures/Graph')
 const CircularQueue = require('./data_structures/CircularQueue')
-const { GamePhaseManager, GAME_PHASES } = require('./data_structures/GamePhaseManager')
+const { GamePhaseManager, GAME_PHASES } = require('./GamePhaseManager')
+const PlayerGameActionRequestRouter = require('./PlayerGameActionRequestRouter')
 
 const Player = require('./data_contracts/Player')
 const Territory = require('./data_contracts/Territory')
@@ -77,14 +78,37 @@ const GameState = ({ config, territoriesGraph, players, turnManager, phaseManage
 
 const Risk = () => {
     const gameState = createDefaultGameState();
-
-    const submitPlayerGameActionRequest = (playerGameActionRequest) => {
+    const metaState = {
+        executedActionRequests : [],
+        failedActionRequests : []
     }
 
 
+    const submitGameAction = (playerGameActionRequest) => {
+        const actionCreationFn = PlayerGameActionRequestRouter.RouteRequestToAction(playerGameActionRequest)
 
-    console.log(gameState)
-    console.log(gameState.phaseManager.currentPhase())
+        const gameAction = actionCreationFn();
+        if (gameAction.validateArgs() === false)
+        {
+            metaState.failedActionRequests.push(playerGameActionRequest)
+            console.error('The submitted player game action request was invalid. Submitted request: ', playerGameActionRequest)
+        }
+        else if (gameAction.isAllowed(gameState))
+        {
+            gameAction.execute(gameState)
+            metaState.executedActionRequests.push({ playerGameActionRequest })
+        }
+        else
+        {
+            metaState.failedActionRequests.push(playerGameActionRequest)
+            console.warn("An action was submitted but is not allowed: ", playerGameActionRequest)
+        }
+    }
+
+    return {
+        submitGameAction,
+        metaState
+    }
 }
 
-const r = Risk({});
+module.exports = Risk
