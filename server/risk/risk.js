@@ -1,29 +1,20 @@
-const { Graph } = require('./Graph')
-const CircularQueue = require('./CircularQueue')
-const Player = require('./Player')
+const { Graph } = require('./data_structures/Graph')
+const CircularQueue = require('./data_structures/CircularQueue')
+const { GamePhaseManager, GAME_PHASES } = require('./data_structures/GamePhaseManager')
 
-const RiskGameConfig = ({ playerCount, startingUnitCount }) => ({
+const Player = require('./data_contracts/Player')
+const Territory = require('./data_contracts/Territory')
+const Unit = require('./data_contracts/Unit')
+
+const RiskGameConfig = ({ playerCount, startingUnitsToPlaceCount }) => ({
     playerCount, 
-    startingUnitCount
+    startingUnitsToPlaceCount
 })
 
 const createDefaultConfig = () => RiskGameConfig({
     playerCount : 2,
-    startingUnitCount : 10
+    startingUnitsToPlaceCount : 10
 })
-
-const Unit = ({ id }) => ({ id })
-
-const Territory = ({ name, numberOfUnits }) => {
-    if (!name) {
-        throw 'Cannot create territory without name'
-    }
-    
-    return {
-        name,
-        numberOfUnits : numberOfUnits ?? 0
-    }
-}
 
 const createDefaultTerritoriesGraph = () => {
     const territoriesGraph = Graph();
@@ -49,25 +40,51 @@ const createDefaultTerritoriesGraph = () => {
     return territoriesGraph;
 }
 
-const createDefaultGameState = () => GameState({
-    config : createDefaultConfig(),
-    territoriesGraph : createDefaultTerritoriesGraph(),
-    players : [ Player({name : "aaron"}), Player({name : "scootes"}) ]
-})
 
-const GameState = ({ config, territoriesGraph, players }) => ({
+const createDefaultGameState = () => { 
+    const config = createDefaultConfig();
+    const players = [ 
+        Player({
+            name : "aaron",
+            startingUnitsToPlaceCount : config.startingUnitsToPlaceCount
+
+        }), 
+        Player({
+            name : "scootes",
+            startingUnitsToPlaceCount : config.startingUnitsToPlaceCount
+        }) 
+    ];
+    const phaseManager = GamePhaseManager(GAME_PHASES.setup);
+
+    return GameState({
+        config,
+        territoriesGraph : createDefaultTerritoriesGraph(),
+        players : players,
+        turnManager : CircularQueue(players.map( player => player.name)),
+        phaseManager 
+    })
+}
+const GameState = ({ config, territoriesGraph, players, turnManager, phaseManager }) => ({
     config,
     territories : territoriesGraph,
     players,
-    turnManager : CircularQueue(players.map( player => player.name))
+    turnManager,
+    phaseManager
 }) 
+
 
 
 
 const Risk = () => {
     const gameState = createDefaultGameState();
 
+    const submitPlayerGameActionRequest = (playerGameActionRequest) => {
+    }
+
+
+
     console.log(gameState)
+    console.log(gameState.phaseManager.currentPhase())
 }
 
 const r = Risk({});
